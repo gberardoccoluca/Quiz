@@ -682,6 +682,15 @@
       <span class="deck-count" id="roundLabel">round 1</span>
     </div>
 
+    <div class="mode-row">
+      <div class="segmented" id="lengthToggle" role="group" aria-label="Session length">
+        <button type="button" data-length="10">10</button>
+        <button type="button" data-length="20">20</button>
+        <button type="button" data-length="all" class="active">ALL</button>
+      </div>
+      <span class="deck-count" id="sessionLabel"></span>
+    </div>
+
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
 
     <div class="card">
@@ -798,6 +807,7 @@ const IMAGE_DATA = [
 
 let mode = "def2verb"; // def2verb: meaning → verb | verb2def: verb → meaning | pic2verb: picture → verb
 let pool = DATA;
+let sessionLength = "all"; // "10" | "20" | "all"
 let deck = [];
 let pos = 0;
 let round = 1;
@@ -811,6 +821,8 @@ let locked = false;
 const els = {
   deckLabel: document.getElementById("deckLabel"),
   roundLabel: document.getElementById("roundLabel"),
+  lengthToggle: document.getElementById("lengthToggle"),
+  sessionLabel: document.getElementById("sessionLabel"),
   progressFill: document.getElementById("progressFill"),
   entryNo: document.getElementById("entryNo"),
   promptText: document.getElementById("promptText"),
@@ -988,9 +1000,12 @@ function shuffle(arr) {
 }
 
 function newDeck(announce) {
-  deck = shuffle(pool.map((_, i) => i));
+  const full = shuffle(pool.map((_, i) => i));
+  const cap = sessionLength === "all" ? full.length : Math.min(Number(sessionLength), full.length);
+  deck = full.slice(0, cap);
   pos = 0;
   els.roundLabel.textContent = "round " + round;
+  els.sessionLabel.textContent = sessionLength === "all" ? "" : cap + "-verb session";
   if (announce) showToast("Deck reshuffled — round " + round);
 }
 
@@ -1131,6 +1146,22 @@ els.modeToggle.addEventListener("click", (e) => {
   pool = mode === "pic2verb" ? IMAGE_DATA : DATA;
   Array.from(els.modeToggle.children).forEach((c) => c.classList.toggle("active", c === b));
   els.deckLabel.textContent = pool.length + " entries";
+  round = 1;
+  score = 0;
+  answered = 0;
+  streak = 0;
+  best = 0;
+  updateStats();
+  newDeck(false);
+  buildQuestion();
+});
+
+els.lengthToggle.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-length]");
+  if (!b) return;
+  if (b.dataset.length === sessionLength) return;
+  sessionLength = b.dataset.length;
+  Array.from(els.lengthToggle.children).forEach((c) => c.classList.toggle("active", c === b));
   round = 1;
   score = 0;
   answered = 0;
