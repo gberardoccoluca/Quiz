@@ -1,1 +1,1 @@
-This is a repository for basic english
+This is a repository to learn basic english
